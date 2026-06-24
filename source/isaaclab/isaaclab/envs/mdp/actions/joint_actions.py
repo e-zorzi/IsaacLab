@@ -262,3 +262,123 @@ class JointEffortAction(JointAction):
     def apply_actions(self):
         # set joint effort targets
         self._asset.set_joint_effort_target(self.processed_actions, joint_ids=self._joint_ids)
+
+
+class FourWheeledJointVelocityAction(JointAction):
+    """Maps 2D actions [front, rear] → 4 wheel joint velocity targets."""
+
+    cfg: actions_cfg.FourWheeledJointVelocityActionCfg
+
+    @property
+    def action_dim(self):
+        return 2
+
+    def __init__(self, cfg, env):
+        super().__init__(cfg, env)
+        self.robot: Articulation = env.scene[cfg.asset_name]
+
+        self.wheel_radius = cfg.wheel_radius
+        self.track_width = cfg.track_width
+
+        if cfg.use_default_offset:
+            self._offset = self._asset.data.default_joint_vel[:, self._joint_ids].clone()
+        else:
+            self._offset = 0.0
+
+    def apply_actions(self):
+        actions = self.processed_actions  # (N, 2)
+
+        # v = actions[:, 0]
+        # omega = actions[:, 1]
+        v = torch.clamp(actions[:, 0], min=0.0)
+
+        omega = actions[:, 1]
+
+        moving = v > 0.05
+        omega_limit = 2.0 * v / self.track_width
+
+        omega = torch.where(
+            moving,
+            torch.clamp(omega, -omega_limit, omega_limit),
+            omega,
+        )
+
+        v_left = v - 0.5 * self.track_width * omega
+        v_right = v + 0.5 * self.track_width * omega
+        w_left = v_left / self.wheel_radius
+        w_right = v_right / self.wheel_radius
+
+        joint_vel = torch.stack(
+            [w_left, w_right, w_left, w_right],
+            dim=1,
+        )
+
+        self._asset.set_joint_velocity_target(
+            joint_vel + self._offset,
+            joint_ids=self._joint_ids,
+        )
+
+    # """
+    # Debug visualization.
+    # """
+
+    # def _set_debug_vis_impl(self, debug_vis: bool):
+    #     # set visibility of markers
+    #     # note: parent only deals with callbacks. not their visibility
+    #     if debug_vis:
+    #         # create markers if necessary for the first tome
+    #         if not hasattr(self, "base_vel_goal_visualizer"):
+    #             # -- goal
+    #             marker_cfg = GREEN_ARROW_X_MARKER_CFG.copy()
+    #             marker_cfg.prim_path = "/Visuals/Actions/velocity_goal"
+    #             marker_cfg.markers["arrow"].scale = (0.5, 0.5, 0.5)
+    #             self.base_vel_goal_visualizer = VisualizationMarkers(marker_cfg)
+    #             # -- current
+    #             marker_cfg = BLUE_ARROW_X_MARKER_CFG.copy()
+    #             marker_cfg.prim_path = "/Visuals/Actions/velocity_current"
+    #             marker_cfg.markers["arrow"].scale = (0.5, 0.5, 0.5)
+    #             self.base_vel_visualizer = VisualizationMarkers(marker_cfg)
+    #         # set their visibility to true
+    #         self.base_vel_goal_visualizer.set_visibility(True)
+    #         self.base_vel_visualizer.set_visibility(True)
+    #     else:
+    #         if hasattr(self, "base_vel_goal_visualizer"):
+    #             self.base_vel_goal_visualizer.set_visibility(False)
+    #             self.base_vel_visualizer.set_visibility(False)
+
+    # def _debug_vis_callback(self, event):
+    #     # check if robot is initialized
+    #     # note: this is needed in-case the robot is de-initialized. we can't access the data
+    #     if not self.robot.is_initialized:
+    #         return
+    #     # get marker location
+    #     # -- base state
+    #     base_pos_w = self.robot.data.root_pos_w.clone()
+    #     base_pos_w[:, 2] += 0.5
+    #     # -- resolve the scales and quaternions
+    #     vel_des_arrow_scale, vel_des_arrow_quat = self._resolve_xy_velocity_to_arrow(self.raw_actions[:, :2])
+    #     vel_arrow_scale, vel_arrow_quat = self._resolve_xy_velocity_to_arrow(self.robot.data.root_lin_vel_b[:, :2])
+    #     # display markers
+    #     self.base_vel_goal_visualizer.visualize(base_pos_w, vel_des_arrow_quat, vel_des_arrow_scale)
+    #     self.base_vel_visualizer.visualize(base_pos_w, vel_arrow_quat, vel_arrow_scale)
+
+    # """
+    # Internal helpers.
+    # """
+
+    # def _resolve_xy_velocity_to_arrow(self, xy_velocity: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    #     """Converts the XY base velocity command to arrow direction rotation."""
+    #     # obtain default scale of the marker
+    #     default_scale = self.base_vel_goal_visualizer.cfg.markers["arrow"].scale
+    #     # arrow-scale
+    #     arrow_scale = torch.tensor(default_scale, device=self.device).repeat(xy_velocity.shape[0], 1)
+    #     arrow_scale[:, 0] *= torch.linalg.norm(xy_velocity, dim=1) * 3.0
+    #     # arrow-direction
+    #     heading_angle = torch.atan2(xy_velocity[:, 1], xy_velocity[:, 0])
+    #     zeros = torch.zeros_like(heading_angle)
+    #     arrow_quat = math_utils.quat_from_euler_xyz(zeros, zeros, heading_angle)
+    #     # convert everything back from base to world frame
+    #     base_quat_w = self.robot.data.root_quat_w
+    #     arrow_quat = math_utils.quat_mul(base_quat_w, arrow_quat)
+
+    #     return arrow_scale, arrow_quat

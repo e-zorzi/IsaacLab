@@ -377,3 +377,25 @@ class SurfaceGripperBinaryActionCfg(ActionTermCfg):
     """The command value to close the gripper. Defaults to 1.0."""
 
     class_type: type[ActionTerm] = surface_gripper_actions.SurfaceGripperBinaryAction
+
+
+@configclass
+class FourWheeledJointVelocityActionCfg(JointActionCfg):
+    """Configuration for the joint velocity action term.
+
+    See :class:`FourWheeledJointVelocityActionCfg` for more details.
+    """
+
+    class_type: type[ActionTerm] = joint_actions.FourWheeledJointVelocityAction
+
+    use_default_offset: bool = False
+
+    """Whether to use default joint velocities configured in the articulation asset as offset.
+    Defaults to True.
+
+    This overrides the settings from :attr:`offset` if set to True.
+    """
+    # Wheel radius
+    wheel_radius: float = 0.05
+    # Track width
+    track_width: float = 0.5
