@@ -4,8 +4,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import math
-
+import json
 import isaaclab.sim as sim_utils
+from isaaclab.actuators import ImplicitActuatorCfg  # noqa: E402
 from isaaclab.assets import ArticulationCfg, AssetBaseCfg
 from isaaclab.envs import ManagerBasedRLEnvCfg
 from isaaclab.managers import EventTermCfg as EventTerm
@@ -15,18 +16,23 @@ from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.scene import InteractiveSceneCfg
-from isaaclab.utils import configclass
-from isaaclab.actuators import ImplicitActuatorCfg  # noqa: E402
 from isaaclab.sensors import ContactSensorCfg, MultiMeshRayCasterCfg, patterns
+from isaaclab.utils import configclass
 
 import isaaclab_tasks.manager_based.classic.cartpole.mdp as mdp
 import isaaclab_tasks.manager_based.navigation.mdp as navmdp
-from isaaclab.managers import SceneEntityCfg
+import isaaclab_tasks.manager_based.ithor.mdp as ithormdp
 
 ##
 # Scene definition
 ##
 SCENE_NUM = 212
+
+with open("/home/edoardo/isaac/samples.json") as valid_positions_file:
+    try:
+        _VALID_POSITIONS = json.load(valid_positions_file)[str(SCENE_NUM)]
+    except:  # noqa
+        _VALID_POSITIONS = None
 
 LIMO_PATH = "/home/edoardo/isaac-sim/scripts/LIMO_with_camera_near.usd"
 
@@ -94,7 +100,7 @@ class IthorSceneCfg(InteractiveSceneCfg):
     ground = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Scene",
         spawn=sim_utils.UsdFileCfg(
-            usd_path=f"/home/edoardo/isaac/lab2/assets/usd/scenes/ithor/FloorPlan{SCENE_NUM}_physics/scene.usda",
+            usd_path=f"/home/edoardo/isaac/lab/assets/usd/scenes/ithor/FloorPlan{SCENE_NUM}_physics/scene.usda",
         ),
     )
     ## lights
@@ -110,7 +116,7 @@ class IthorSceneCfg(InteractiveSceneCfg):
         prim_path="{ENV_REGEX_NS}/Robot/LIMO/chassis_link",
         # offset=MultiMeshRayCaster.OffsetCfg(pos=(0.0, 0.0, 20.0)),
         ray_alignment="yaw",
-        pattern_cfg=patterns.GridPatternCfg(resolution=0.05, size=[0.8, 0.8]),
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.08, size=[0.7, 0.7]),
         debug_vis=True,
         mesh_prim_paths=["/World/envs/env_.*/Scene"],
     )
@@ -152,6 +158,7 @@ class ObservationsCfg:
         pose_command = ObsTerm(func=mdp.generated_commands, params={"command_name": "pose_command"})
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         actions = ObsTerm(func=mdp.last_action)
+        height_scan = ObsTerm(func=mdp.height_scan, params={"sensor_cfg": SceneEntityCfg("height_scanner")})
 
         def __post_init__(self) -> None:
             self.enable_corruption = False
@@ -202,20 +209,28 @@ class RewardsCfg:
     # (2) Failure penalty
     # terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
     position_tracking = RewTerm(
-        func=navmdp.position_command_error,
+        func=ithormdp.position_command_error,
         weight=-3.0,
         params={"std": 0.2, "command_name": "pose_command"},
     )
     position_tracking_fine_grained = RewTerm(
-        func=navmdp.position_command_error_tanh,
+        func=ithormdp.position_command_error_tanh,
         weight=1.0,
         params={"std": 0.2, "command_name": "pose_command"},
     )
     # orientation_tracking = RewTerm(
-    #     func=navmdp.heading_command_error_abs,
+    #     func=ithormdp.heading_command_error_abs,
     #     weight=-1.0,
     #     params={"command_name": "pose_command"},
     # )
+    collision_penalty = RewTerm(
+        func=ithormdp.collision_reward,
+        weight=-1.0,
+        params={
+            "sensor_cfg": SceneEntityCfg("contact_forces"),
+            "threshold": 1.0,
+        },
+    )
 
 
 @configclass
@@ -241,9 +256,10 @@ class CommandsCfg:
     pose_command = navmdp.GoalPositionCommandCfg(
         asset_name="robot",
         simple_heading=False,
-        resampling_time_range=(30.0, 30.0),
+        resampling_time_range=(15.0, 15.0),
         debug_vis=True,
         ranges=navmdp.GoalPositionCommandCfg.Ranges(pos_x=(-1.5, 1.5), pos_y=(-1.5, 1.5), heading=(math.pi, math.pi)),
+        fixed_positions=_VALID_POSITIONS,
         # ranges=navmdp.UniformPose2dCommandCfg.Ranges(
         #     pos_x=(-1.0, 1.0), pos_y=(-1.0, 1.0), heading=(math.pi, math.pi)
         # ),
