@@ -267,6 +267,9 @@ class GoalPositionCommandCfg(CommandTermCfg):
     ranges: Ranges = MISSING
     """Distribution ranges for the position commands."""
 
+    fixed_positions: list = None
+    """Fixed positions (to override ranges) when we want to sample from a fixed list."""
+
     goal_pose_visualizer_cfg: VisualizationMarkersCfg = POSITION_GOAL_MARKER_CFG.replace(
         prim_path="/Visuals/Command/pose_goal"
     )

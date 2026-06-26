@@ -47,6 +47,10 @@ class UniformPose2dCommand(CommandTerm):
         # initialize the base class
         super().__init__(cfg, env)
 
+        try:
+            self.fixed_positions = cfg.fixed_positions
+        except:  # noqa
+            self.fixed_positions = None
         # obtain the robot and terrain assets
         # -- robot
         self.robot: Articulation = env.scene[cfg.asset_name]
@@ -90,8 +94,18 @@ class UniformPose2dCommand(CommandTerm):
         self.pos_command_w[env_ids] = self._env.scene.env_origins[env_ids]
         # offset the position command by the current root position
         r = torch.empty(len(env_ids), device=self.device)
-        self.pos_command_w[env_ids, 0] += r.uniform_(*self.cfg.ranges.pos_x)
-        self.pos_command_w[env_ids, 1] += r.uniform_(*self.cfg.ranges.pos_y)
+        if self.fixed_positions:
+            fixed = torch.tensor(self.fixed_positions, device=self.device)
+
+            idx = torch.randint(0, fixed.shape[0], (len(env_ids),), device=self.device)
+
+            choice = fixed[idx]  # (num_envs, 2)
+
+            self.pos_command_w[env_ids, 0] += choice[:, 0]
+            self.pos_command_w[env_ids, 1] += choice[:, 1]
+        else:
+            self.pos_command_w[env_ids, 0] += r.uniform_(*self.cfg.ranges.pos_x)
+            self.pos_command_w[env_ids, 1] += r.uniform_(*self.cfg.ranges.pos_y)
         self.pos_command_w[env_ids, 2] += self.robot.data.default_root_state[env_ids, 2]
 
         if self.cfg.simple_heading:
