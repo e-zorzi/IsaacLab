@@ -6,7 +6,6 @@
 import math
 
 import isaaclab.sim as sim_utils
-from isaaclab.actuators import ImplicitActuatorCfg  # noqa: E402
 from isaaclab.assets import ArticulationCfg, AssetBaseCfg
 from isaaclab.envs import ManagerBasedRLEnvCfg
 from isaaclab.managers import EventTermCfg as EventTerm
@@ -22,74 +21,30 @@ from isaaclab.utils import configclass
 import isaaclab_tasks.manager_based.classic.cartpole.mdp as mdp
 import isaaclab_tasks.manager_based.ithor.mdp as ithormdp
 import isaaclab_tasks.manager_based.navigation.mdp as navmdp
-from isaaclab_tasks.manager_based.ithor import _ITHOR_VALID_POSITIONS
+from isaaclab_tasks.manager_based.ithor import _ITHOR_VALID_GOAL_POSITIONS, _ITHOR_VALID_ROBOT_POSES
+
+from isaaclab_assets import LIMO_CONFIG
 
 ##
 # Scene definition
 ##
-SCENE_NUM = 212
+SCENE_NUM = 214
 
 try:
-    _VALID_POSITIONS = _ITHOR_VALID_POSITIONS[str(SCENE_NUM)]
+    _VALID_GOAL_POSITIONS = _ITHOR_VALID_GOAL_POSITIONS[str(SCENE_NUM)]
 except:  # noqa
-    _VALID_POSITIONS = None
+    _VALID_GOAL_POSITIONS = None
 
-LIMO_PATH = "/home/edoardo/isaac-sim/scripts/LIMO_with_camera_near.usd"
 
-LIMO_CONFIG = ArticulationCfg(
-    spawn=sim_utils.UsdFileCfg(
-        usd_path=LIMO_PATH,  # f"{ISAAC_NUCLEUS_DIR}/Robots/Yahboom/Dofbot/dofbot.usd",
-        rigid_props=sim_utils.RigidBodyPropertiesCfg(
-            disable_gravity=False,
-            max_depenetration_velocity=5.0,
-        ),
-        articulation_props=sim_utils.ArticulationRootPropertiesCfg(
-            enabled_self_collisions=True,
-            solver_position_iteration_count=8,
-            solver_velocity_iteration_count=0,
-        ),
-        activate_contact_sensors=True,
-    ),
-    init_state=ArticulationCfg.InitialStateCfg(
-        joint_pos={
-            "front_left_wheel": 0.0,
-            "front_right_wheel": 0.0,
-            "rear_left_wheel": 0.0,
-            "rear_right_wheel": 0.0,
-        },
-        # pos=(0.25, -0.25, 0.0),
-    ),
-    actuators={
-        "front_joints": ImplicitActuatorCfg(
-            joint_names_expr=["front_left_wheel", "front_right_wheel"],
-            effort_limit_sim=10.0,
-            velocity_limit_sim=10.0,
-            stiffness=None,  # 10000.0,
-            damping=None,  # 100.0,
-        ),
-        "rear_joints": ImplicitActuatorCfg(
-            joint_names_expr=["rear_left_wheel", "rear_right_wheel"],
-            effort_limit_sim=10.0,
-            velocity_limit_sim=10.0,
-            stiffness=None,  # 10000.0,
-            damping=None,  # 100.0,
-        ),
-        # "joint3_act": ImplicitActuatorCfg(
-        #     joint_names_expr=["rear_left_wheel"],
-        #     effort_limit_sim=100.0,
-        #     velocity_limit_sim=100.0,
-        #     stiffness=10000.0,
-        #     damping=100.0,
-        # ),
-        # "joint4_act": ImplicitActuatorCfg(
-        #     joint_names_expr=["rear_right_wheel"],
-        #     effort_limit_sim=100.0,
-        #     velocity_limit_sim=100.0,
-        #     stiffness=10000.0,
-        #     damping=100.0,
-        # ),
-    },
-)
+try:
+    robot_data = _ITHOR_VALID_ROBOT_POSES[str(SCENE_NUM)]
+    robot_position = robot_data[0]
+    robot_rotation = robot_data[1]
+except:  # noqa
+    print("Defaulting robot position and orientation...")
+    robot_position = [0, 0, 0]  # default
+    robot_rotation = [1, 0, 0, 0]  # default
+print(robot_position, robot_rotation)
 
 
 @configclass
@@ -100,7 +55,7 @@ class IthorSceneCfg(InteractiveSceneCfg):
     ground = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Scene",
         spawn=sim_utils.UsdFileCfg(
-            usd_path=f"/home/edoardo/isaac/lab/assets/usd/scenes/ithor/FloorPlan{SCENE_NUM}_physics/scene.usda",
+            usd_path=f"./assets/usd/scenes/ithor/FloorPlan{SCENE_NUM}_physics/scene.usda",
         ),
     )
     ## lights
@@ -110,7 +65,19 @@ class IthorSceneCfg(InteractiveSceneCfg):
     )
 
     # robot
-    robot: ArticulationCfg = LIMO_CONFIG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+    robot: ArticulationCfg = LIMO_CONFIG.replace(
+        prim_path="{ENV_REGEX_NS}/Robot",
+        init_state=ArticulationCfg.InitialStateCfg(
+            pos=robot_position,
+            rot=robot_rotation,
+            joint_pos={
+                "front_left_wheel": 0.0,
+                "front_right_wheel": 0.0,
+                "rear_left_wheel": 0.0,
+                "rear_right_wheel": 0.0,
+            },
+        ),
+    )
 
     height_scanner = MultiMeshRayCasterCfg(
         prim_path="{ENV_REGEX_NS}/Robot/LIMO/chassis_link",
@@ -261,7 +228,7 @@ class CommandsCfg:
         resampling_time_range=(15.0, 15.0),
         debug_vis=True,
         ranges=navmdp.GoalPositionCommandCfg.Ranges(pos_x=(-1.5, 1.5), pos_y=(-1.5, 1.5), heading=(math.pi, math.pi)),
-        fixed_positions=_VALID_POSITIONS,
+        fixed_positions=_VALID_GOAL_POSITIONS,
         # ranges=navmdp.UniformPose2dCommandCfg.Ranges(
         #     pos_x=(-1.0, 1.0), pos_y=(-1.0, 1.0), heading=(math.pi, math.pi)
         # ),

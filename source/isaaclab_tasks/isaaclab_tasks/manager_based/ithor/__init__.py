@@ -1,2 +1,2 @@
 from .config import ithor
-from .ithor_valid_positions import _ITHOR_VALID_POSITIONS
+from .ithor_valid_positions import _ITHOR_VALID_GOAL_POSITIONS, _ITHOR_VALID_ROBOT_POSES
