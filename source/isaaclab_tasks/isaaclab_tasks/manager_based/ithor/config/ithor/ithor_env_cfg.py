@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import math
-import json
+
 import isaaclab.sim as sim_utils
 from isaaclab.actuators import ImplicitActuatorCfg  # noqa: E402
 from isaaclab.assets import ArticulationCfg, AssetBaseCfg
@@ -20,19 +20,19 @@ from isaaclab.sensors import ContactSensorCfg, MultiMeshRayCasterCfg, patterns
 from isaaclab.utils import configclass
 
 import isaaclab_tasks.manager_based.classic.cartpole.mdp as mdp
-import isaaclab_tasks.manager_based.navigation.mdp as navmdp
 import isaaclab_tasks.manager_based.ithor.mdp as ithormdp
+import isaaclab_tasks.manager_based.navigation.mdp as navmdp
+from isaaclab_tasks.manager_based.ithor import _ITHOR_VALID_POSITIONS
 
 ##
 # Scene definition
 ##
 SCENE_NUM = 212
 
-with open("/home/edoardo/isaac/samples.json") as valid_positions_file:
-    try:
-        _VALID_POSITIONS = json.load(valid_positions_file)[str(SCENE_NUM)]
-    except:  # noqa
-        _VALID_POSITIONS = None
+try:
+    _VALID_POSITIONS = _ITHOR_VALID_POSITIONS[str(SCENE_NUM)]
+except:  # noqa
+    _VALID_POSITIONS = None
 
 LIMO_PATH = "/home/edoardo/isaac-sim/scripts/LIMO_with_camera_near.usd"
 
@@ -158,7 +158,9 @@ class ObservationsCfg:
         pose_command = ObsTerm(func=mdp.generated_commands, params={"command_name": "pose_command"})
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         actions = ObsTerm(func=mdp.last_action)
-        height_scan = ObsTerm(func=mdp.height_scan, params={"sensor_cfg": SceneEntityCfg("height_scanner")})
+        height_scan = ObsTerm(
+            func=mdp.height_scan_quantized, params={"sensor_cfg": SceneEntityCfg("height_scanner"), "offset": 0.145}
+        )
 
         def __post_init__(self) -> None:
             self.enable_corruption = False
@@ -225,7 +227,7 @@ class RewardsCfg:
     # )
     collision_penalty = RewTerm(
         func=ithormdp.collision_reward,
-        weight=-1.0,
+        weight=-5.0,
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces"),
             "threshold": 1.0,
