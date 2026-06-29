@@ -28,7 +28,7 @@ from isaaclab_assets import LIMO_CONFIG
 ##
 # Scene definition
 ##
-SCENE_NUM = 214
+SCENE_NUM = 212
 
 try:
     _VALID_GOAL_POSITIONS = _ITHOR_VALID_GOAL_POSITIONS[str(SCENE_NUM)]
@@ -81,10 +81,13 @@ class IthorSceneCfg(InteractiveSceneCfg):
 
     height_scanner = MultiMeshRayCasterCfg(
         prim_path="{ENV_REGEX_NS}/Robot/LIMO/chassis_link",
-        # offset=MultiMeshRayCaster.OffsetCfg(pos=(0.0, 0.0, 20.0)),
+        # offset=MultiMeshRayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 0.0)),
         ray_alignment="yaw",
-        pattern_cfg=patterns.GridPatternCfg(resolution=0.08, size=[0.7, 0.7]),
-        debug_vis=True,
+        pattern_cfg=patterns.LidarPatternCfg(
+            channels=25, vertical_fov_range=[0, 30], horizontal_fov_range=[-45, 45], horizontal_res=1.0
+        ),
+        # patterns.GridPatternCfg(resolution=0.08, size=[0.7, 0.7]),
+        debug_vis=False,
         mesh_prim_paths=["/World/envs/env_.*/Scene"],
     )
     contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/LIMO/.*", history_length=3, track_air_time=True)
