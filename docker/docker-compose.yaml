@@ -73,6 +73,7 @@ x-default-isaac-lab-volumes: &default-isaac-lab-volumes
 x-default-isaac-lab-environment: &default-isaac-lab-environment
   - ISAACSIM_PATH=${DOCKER_ISAACLAB_PATH}/_isaac_sim
   - OMNI_KIT_ALLOW_ROOT=1
+  - LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
 
 x-default-isaac-lab-deploy: &default-isaac-lab-deploy
   resources:
@@ -80,7 +81,7 @@ x-default-isaac-lab-deploy: &default-isaac-lab-deploy
       devices:
         - driver: nvidia
           count: all
-          capabilities: [ gpu ]
+          capabilities: [ gpu, graphics, utility ]
 
 services:
   # This service is the base Isaac Lab image

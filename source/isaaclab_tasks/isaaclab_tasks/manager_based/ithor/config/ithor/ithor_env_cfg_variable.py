@@ -81,10 +81,13 @@ def make_scene_cfg(room_id=0, num_envs=1, env_spacing=4.0):
 
         height_scanner = MultiMeshRayCasterCfg(
             prim_path="{ENV_REGEX_NS}/Robot/LIMO/chassis_link",
-            # offset=MultiMeshRayCaster.OffsetCfg(pos=(0.0, 0.0, 20.0)),
+            # offset=MultiMeshRayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 0.0)),
             ray_alignment="yaw",
-            pattern_cfg=patterns.GridPatternCfg(resolution=0.08, size=[0.7, 0.7]),
-            debug_vis=True,
+            pattern_cfg=patterns.LidarPatternCfg(
+                channels=25, vertical_fov_range=[0, 30], horizontal_fov_range=[-45, 45], horizontal_res=1.0
+            ),
+            # patterns.GridPatternCfg(resolution=0.08, size=[0.7, 0.7]),
+            debug_vis=False,
             mesh_prim_paths=["/World/envs/env_.*/Scene"],
         )
         contact_forces = ContactSensorCfg(
