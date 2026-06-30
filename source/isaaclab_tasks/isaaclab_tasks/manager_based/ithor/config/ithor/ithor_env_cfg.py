@@ -51,7 +51,7 @@ print(robot_position, robot_rotation)
 class IthorSceneCfg(InteractiveSceneCfg):
     """Configuration for a ithor scenes."""
 
-    terrain = AssetBaseCfg(prim_path="/World/defaultGroundPlane", spawn=sim_utils.GroundPlaneCfg())
+    # terrain = AssetBaseCfg(prim_path="/World/defaultGroundPlane", spawn=sim_utils.GroundPlaneCfg())
     ground = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Scene",
         spawn=sim_utils.UsdFileCfg(
@@ -83,10 +83,12 @@ class IthorSceneCfg(InteractiveSceneCfg):
         prim_path="{ENV_REGEX_NS}/Robot/LIMO/chassis_link",
         # offset=MultiMeshRayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 0.0)),
         ray_alignment="yaw",
-        pattern_cfg=patterns.LidarPatternCfg(
-            channels=25, vertical_fov_range=[0, 30], horizontal_fov_range=[-45, 45], horizontal_res=1.0
-        ),
-        # patterns.GridPatternCfg(resolution=0.08, size=[0.7, 0.7]),
+        update_period=1 / 60,
+        offset=MultiMeshRayCasterCfg.OffsetCfg(pos=(0.35, 0.0, 0.2)),
+        # pattern_cfg=patterns.LidarPatternCfg(
+        #    channels=10, vertical_fov_range=[0, 30], horizontal_fov_range=[88, 92], horizontal_res=1.0
+        # ),
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.05, size=[0.7, 0.5]),
         debug_vis=False,
         mesh_prim_paths=["/World/envs/env_.*/Scene"],
     )
@@ -163,12 +165,9 @@ class EventCfg:
         },
     )
     reset_robot_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
+        func=mdp.reset_root_state_from_list,
         mode="reset",
-        params={
-            "pose_range": {},  # default to 0
-            "velocity_range": {},
-        },
+        params={"candidates": robot_position},
     )
 
 
