@@ -42,7 +42,7 @@ def heading_command_error_abs(env: ManagerBasedRLEnv, command_name: str) -> torc
     return heading_b.abs()
 
 
-def collision_reward(env, sensor_cfg: SceneEntityCfg, threshold: float):
+def collision_reward(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg, threshold: float):
     sensor = env.scene.sensors[sensor_cfg.name]
 
     # shape: (num_envs, num_bodies, 3)
@@ -54,3 +54,21 @@ def collision_reward(env, sensor_cfg: SceneEntityCfg, threshold: float):
     # print("~~~~~~~~~~~~~~", collided)
 
     return collided.float()
+
+
+def angular_velocity_reward(env: ManagerBasedRLEnv, threshold: float):
+    """Penalize angular velocity."""
+    action = env.action_manager.action[:, 1].abs()
+    # print("~~~~~~~~~~~~~~", action)
+    # action = torch.where(action.abs() > 0.0, 1.0, 0.0)
+    # print("~~~~~~~~~~~~~~", action)
+    return action
+
+
+def angular_velocity_binary_reward(env: ManagerBasedRLEnv, threshold: float):
+    """Penalize angular velocity."""
+    action = env.action_manager.action[:, 1].abs()
+    # print("~~~~~~~~~~~~~~", action)
+    action = torch.where(action.abs() > 0.0, 1.0, 0.0)
+    # print("~~~~~~~~~~~~~~", action)
+    return action

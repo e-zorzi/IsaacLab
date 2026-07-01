@@ -5,8 +5,10 @@
 import isaaclab.sim as sim_utils
 from isaaclab.actuators import ImplicitActuatorCfg
 from isaaclab.assets import ArticulationCfg
+from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 
 LIMO_PATH = "./source/isaaclab_assets/isaaclab_assets/robots/LIMO.usd"
+LIMO_PATH = f"{ISAAC_NUCLEUS_DIR}/Robots/AgilexRobotics/limo/limo.usd"
 
 LIMO_CONFIG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(

@@ -51,13 +51,7 @@ print(robot_position, robot_rotation)
 class IthorSceneCfg(InteractiveSceneCfg):
     """Configuration for a ithor scenes."""
 
-    # terrain = AssetBaseCfg(prim_path="/World/defaultGroundPlane", spawn=sim_utils.GroundPlaneCfg())
-    ground = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/Scene",
-        spawn=sim_utils.UsdFileCfg(
-            usd_path=f"./assets/usd/scenes/ithor/FloorPlan{SCENE_NUM}_physics/scene.usda",
-        ),
-    )
+    ground = AssetBaseCfg(prim_path="/World/defaultGroundPlane", spawn=sim_utils.GroundPlaneCfg())
     ## lights
     dome_light = AssetBaseCfg(
         prim_path="/World/Light",
@@ -68,8 +62,6 @@ class IthorSceneCfg(InteractiveSceneCfg):
     robot: ArticulationCfg = LIMO_CONFIG.replace(
         prim_path="{ENV_REGEX_NS}/Robot",
         init_state=ArticulationCfg.InitialStateCfg(
-            pos=robot_position,
-            rot=robot_rotation,
             joint_pos={
                 "front_left_wheel": 0.0,
                 "front_right_wheel": 0.0,
@@ -90,7 +82,7 @@ class IthorSceneCfg(InteractiveSceneCfg):
         # ),
         pattern_cfg=patterns.GridPatternCfg(resolution=0.05, size=[0.7, 0.5]),
         debug_vis=False,
-        mesh_prim_paths=["/World/envs/env_.*/Scene"],
+        mesh_prim_paths=["/World/defaultGroundPlane"],
     )
     contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=3, track_air_time=True)
 
@@ -165,9 +157,7 @@ class EventCfg:
         },
     )
     reset_robot_position = EventTerm(
-        func=mdp.reset_root_state_from_list,
-        mode="reset",
-        params={"candidates": robot_position},
+        func=mdp.reset_root_state_uniform, mode="reset", params={"pose_range": {}, "velocity_range": {}}
     )
 
 
@@ -175,9 +165,6 @@ class EventCfg:
 class RewardsCfg:
     """Reward terms for the MDP."""
 
-    # # (1) Constant running reward
-    # alive = RewTerm(func=mdp.is_alive, weight=1.0)
-    # (2) Failure penalty
     # terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
     position_tracking = RewTerm(
         func=ithormdp.position_command_error,
@@ -236,11 +223,7 @@ class CommandsCfg:
         simple_heading=False,
         resampling_time_range=(15.0, 15.0),
         debug_vis=True,
-        ranges=navmdp.GoalPositionCommandCfg.Ranges(pos_x=(-1.5, 1.5), pos_y=(-1.5, 1.5), heading=(math.pi, math.pi)),
-        fixed_positions=_VALID_GOAL_POSITIONS,
-        # ranges=navmdp.UniformPose2dCommandCfg.Ranges(
-        #     pos_x=(-1.0, 1.0), pos_y=(-1.0, 1.0), heading=(math.pi, math.pi)
-        # ),
+        ranges=navmdp.GoalPositionCommandCfg.Ranges(pos_x=(-2.5, 1.5), pos_y=(-2.5, 1.5), heading=(math.pi, math.pi)),
     )
 
 
@@ -250,11 +233,11 @@ class CommandsCfg:
 
 
 @configclass
-class IthorEnvCfg(ManagerBasedRLEnvCfg):
+class IthorEnvTerrainCfg(ManagerBasedRLEnvCfg):
     """Configuration for the cartpole environment."""
 
     # Scene settings
-    scene: IthorSceneCfg = IthorSceneCfg(num_envs=16, env_spacing=12.0)
+    scene: IthorSceneCfg = IthorSceneCfg(num_envs=16, env_spacing=6.0)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
