@@ -82,14 +82,14 @@ class IthorSceneCfg(InteractiveSceneCfg):
     height_scanner = MultiMeshRayCasterCfg(
         prim_path="{ENV_REGEX_NS}/Robot/chassis_link",
         # offset=MultiMeshRayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 0.0)),
-        ray_alignment="yaw",
+        ray_alignment="base",
         update_period=1 / 60,
-        offset=MultiMeshRayCasterCfg.OffsetCfg(pos=(0.35, 0.0, 0.2)),
-        # pattern_cfg=patterns.LidarPatternCfg(
-        #    channels=10, vertical_fov_range=[0, 30], horizontal_fov_range=[88, 92], horizontal_res=1.0
-        # ),
-        pattern_cfg=patterns.GridPatternCfg(resolution=0.05, size=[0.7, 0.5]),
-        debug_vis=False,
+        # offset=MultiMeshRayCasterCfg.OffsetCfg(pos=(0.35, 0.0, 0.2)),
+        pattern_cfg=patterns.LidarPatternCfg(
+            channels=30, vertical_fov_range=[0, 5], horizontal_fov_range=[-45, 45], horizontal_res=1
+        ),
+        # pattern_cfg=patterns.GridPatternCfg(resolution=0.05, size=[0.7, 0.5]),
+        debug_vis=True,
         mesh_prim_paths=["/World/envs/env_.*/Scene"],
     )
     contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=3, track_air_time=True)
