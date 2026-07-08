@@ -197,19 +197,19 @@ class RewardsCfg:
     # )
     collision_penalty = RewTerm(
         func=ithormdp.collision_reward,
-        weight=-5.0,
+        weight=-3.0,
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces"),
             "threshold": 1.0,
         },
     )
-    angular_velocity_penalty = RewTerm(
-        func=ithormdp.angular_velocity_reward,
-        weight=-1.0,
-        params={
-            "threshold": 0.0,
-        },
-    )
+    # angular_velocity_penalty = RewTerm(
+    #     func=ithormdp.angular_velocity_reward,
+    #     weight=-1.0,
+    #     params={
+    #         "threshold": 0.0,
+    #     },
+    # )
 
 
 @configclass
