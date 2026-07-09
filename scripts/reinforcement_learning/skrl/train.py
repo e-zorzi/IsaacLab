@@ -115,6 +115,7 @@ from isaaclab_rl.skrl import SkrlVecEnvWrapper
 
 import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.utils.hydra import hydra_task_config
+import wandb
 
 # import logger
 logger = logging.getLogger(__name__)
@@ -132,6 +133,10 @@ else:
 
 @hydra_task_config(args_cli.task, agent_cfg_entry_point)
 def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agent_cfg: dict):
+    wandb.init(
+        project="IsaacLab",
+        sync_tensorboard=True,
+    )
     """Train with skrl agent."""
     # override configurations with non-hydra CLI arguments
     env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else env_cfg.scene.num_envs

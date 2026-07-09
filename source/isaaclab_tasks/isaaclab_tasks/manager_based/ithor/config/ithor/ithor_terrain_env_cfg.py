@@ -6,7 +6,7 @@
 import math
 
 import isaaclab.sim as sim_utils
-from isaaclab.assets import ArticulationCfg, AssetBaseCfg
+from isaaclab.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
 from isaaclab.envs import ManagerBasedRLEnvCfg
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
@@ -16,6 +16,8 @@ from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sensors import ContactSensorCfg, MultiMeshRayCasterCfg, patterns
+from isaaclab.sim import schemas
+from isaaclab.sim.spawners.shapes import CuboidCfg
 from isaaclab.utils import configclass
 
 import isaaclab_tasks.manager_based.classic.cartpole.mdp as mdp
@@ -25,10 +27,11 @@ from isaaclab_tasks.manager_based.ithor import _ITHOR_VALID_GOAL_POSITIONS, _ITH
 
 from isaaclab_assets import LIMO_CONFIG
 
+_DEBUG_VIS = False
 ##
 # Scene definition
 ##
-SCENE_NUM = 212
+SCENE_NUM = 999
 
 try:
     _VALID_GOAL_POSITIONS = _ITHOR_VALID_GOAL_POSITIONS[str(SCENE_NUM)]
@@ -49,10 +52,140 @@ print(robot_position, robot_rotation)
 
 @configclass
 class IthorSceneCfg(InteractiveSceneCfg):
-    """Configuration for a ithor scenes."""
-
     ground = AssetBaseCfg(prim_path="/World/defaultGroundPlane", spawn=sim_utils.GroundPlaneCfg())
-    ## lights
+
+    # Cube 1
+    cube1 = RigidObjectCfg(
+        prim_path="{ENV_REGEX_NS}/Cube1",
+        spawn=sim_utils.CuboidCfg(
+            size=(0.5, 0.5, 0.5),
+            collision_props=sim_utils.CollisionPropertiesCfg(),
+            rigid_props=sim_utils.RigidBodyPropertiesCfg(
+                rigid_body_enabled=True,
+                kinematic_enabled=False,
+            ),
+            mass_props=sim_utils.MassPropertiesCfg(mass=100.0),
+            # Visual material (optional)
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.4, 0.4, 0.4)),
+        ),
+        init_state=RigidObjectCfg.InitialStateCfg(
+            pos=(1, 0, 0.33),
+            rot=(1, 0, 0, 0),
+        ),
+    )
+
+    # Cube 2
+    cube2 = RigidObjectCfg(
+        prim_path="{ENV_REGEX_NS}/Cube2",
+        spawn=sim_utils.CuboidCfg(
+            size=(0.5, 0.5, 0.5),
+            collision_props=sim_utils.CollisionPropertiesCfg(),  # Add collision
+            rigid_props=sim_utils.RigidBodyPropertiesCfg(
+                rigid_body_enabled=True,
+                kinematic_enabled=False,
+            ),
+            mass_props=sim_utils.MassPropertiesCfg(mass=100.0),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.8, 0.1)),
+        ),
+        init_state=RigidObjectCfg.InitialStateCfg(
+            pos=(0, 1, 0.33),
+            rot=(1, 0, 0, 0),
+        ),
+    )
+
+    # Cube 2
+    cube3 = RigidObjectCfg(
+        prim_path="{ENV_REGEX_NS}/Cube3",
+        spawn=sim_utils.CuboidCfg(
+            size=(0.5, 0.5, 0.5),
+            collision_props=sim_utils.CollisionPropertiesCfg(),  # Add collision
+            rigid_props=sim_utils.RigidBodyPropertiesCfg(
+                rigid_body_enabled=True,
+                kinematic_enabled=False,
+            ),
+            mass_props=sim_utils.MassPropertiesCfg(mass=100.0),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.3, 0.8, 0.3)),
+        ),
+        init_state=RigidObjectCfg.InitialStateCfg(
+            pos=(-1, 0, 0.33),
+            rot=(1, 0, 0, 0),
+        ),
+    )
+
+    # Cube 2
+    cube4 = RigidObjectCfg(
+        prim_path="{ENV_REGEX_NS}/Cube4",
+        spawn=sim_utils.CuboidCfg(
+            size=(0.5, 0.5, 0.5),
+            collision_props=sim_utils.CollisionPropertiesCfg(),  # Add collision
+            rigid_props=sim_utils.RigidBodyPropertiesCfg(
+                rigid_body_enabled=True,
+                kinematic_enabled=False,
+            ),
+            mass_props=sim_utils.MassPropertiesCfg(mass=100.0),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.8, 0.3, 0.8)),
+        ),
+        init_state=RigidObjectCfg.InitialStateCfg(
+            pos=(0, -1, 0.33),
+            rot=(1, 0, 0, 0),
+        ),
+    )
+
+    wall_north = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/WallNorth",
+        spawn=sim_utils.CuboidCfg(
+            size=(0.1, 6.0, 1.0),  # Thickness, Length, Height
+            collision_props=sim_utils.CollisionPropertiesCfg(),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.5, 0.5, 0.5)),
+        ),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(3.0, 0.0, 0.5)),  # Center height is 0.5
+    )
+
+    wall_south = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/WallSouth",
+        spawn=sim_utils.CuboidCfg(
+            size=(0.1, 6.0, 1.0),
+            collision_props=sim_utils.CollisionPropertiesCfg(),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.5, 0.5, 0.5)),
+        ),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(-3.0, 0.0, 0.5)),
+    )
+
+    wall_east = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/WallEast",
+        spawn=sim_utils.CuboidCfg(
+            size=(6.0, 0.1, 1.0),
+            collision_props=sim_utils.CollisionPropertiesCfg(),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.5, 0.5, 0.5)),
+        ),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 3.0, 0.5)),
+    )
+
+    wall_west = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/WallWest",
+        spawn=sim_utils.CuboidCfg(
+            size=(6.0, 0.1, 1.0),
+            collision_props=sim_utils.CollisionPropertiesCfg(),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.5, 0.5, 0.5)),
+        ),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, -3.0, 0.5)),
+    )
+
+    roof = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/Roof",
+        spawn=sim_utils.CuboidCfg(
+            size=(6.0, 6.0, 0.1),  # Matches the 6x6 area of the walls
+            collision_props=sim_utils.CollisionPropertiesCfg(),
+            # OPTIONAL: Make it slightly transparent so you can still see the robot from above
+            visual_material=sim_utils.PreviewSurfaceCfg(
+                diffuse_color=(0.4, 0.4, 0.4),
+                opacity=0.5,  # 0.5 makes it see-through in the editor
+            ),
+        ),
+        # Wall height (1.0) + half of roof thickness (0.05) = 1.05
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 1.05)),
+    )
+
     dome_light = AssetBaseCfg(
         prim_path="/World/Light",
         spawn=sim_utils.DomeLightCfg(intensity=1000.0, color=(0.75, 0.75, 0.75)),
@@ -74,15 +207,15 @@ class IthorSceneCfg(InteractiveSceneCfg):
     height_scanner = MultiMeshRayCasterCfg(
         prim_path="{ENV_REGEX_NS}/Robot/chassis_link",
         # offset=MultiMeshRayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 0.0)),
-        ray_alignment="yaw",
+        ray_alignment="base",
         update_period=1 / 60,
-        offset=MultiMeshRayCasterCfg.OffsetCfg(pos=(0.35, 0.0, 0.2)),
-        # pattern_cfg=patterns.LidarPatternCfg(
-        #    channels=10, vertical_fov_range=[0, 30], horizontal_fov_range=[88, 92], horizontal_res=1.0
-        # ),
-        pattern_cfg=patterns.GridPatternCfg(resolution=0.05, size=[0.7, 0.5]),
-        debug_vis=False,
-        mesh_prim_paths=["/World/defaultGroundPlane"],
+        # offset=MultiMeshRayCasterCfg.OffsetCfg(pos=(0.35, 0.0, 0.2)),
+        pattern_cfg=patterns.LidarPatternCfg(
+            channels=20, vertical_fov_range=[0, 1], horizontal_fov_range=[-45, 45], horizontal_res=1
+        ),
+        # pattern_cfg=patterns.GridPatternCfg(resolution=0.05, size=[0.7, 0.5]),
+        debug_vis=_DEBUG_VIS,
+        mesh_prim_paths=["/World/envs/env_.*/.*"],
     )
     contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=3, track_air_time=True)
 
@@ -120,7 +253,7 @@ class ObservationsCfg:
         body_pose = ObsTerm(func=mdp.body_pose_w)
 
         pose_command = ObsTerm(func=mdp.generated_commands, params={"command_name": "pose_command"})
-        joint_pos = ObsTerm(func=mdp.joint_pos_rel)
+        # joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         actions = ObsTerm(func=mdp.last_action)
         height_scan = ObsTerm(
             func=mdp.height_scan_quantized, params={"sensor_cfg": SceneEntityCfg("height_scanner"), "offset": 0.145}
@@ -157,19 +290,44 @@ class EventCfg:
         },
     )
     reset_robot_position = EventTerm(
-        func=mdp.reset_root_state_uniform, mode="reset", params={"pose_range": {}, "velocity_range": {}}
+        func=mdp.reset_root_state_from_list,
+        mode="reset",
+        params={"candidates": robot_position},
     )
+    # reset_cubes_position1 = EventTerm(
+    #     func=mdp.reset_root_state_from_list,
+    #     mode="reset",
+    #     params={"candidates": [1, 0, 0.33], "asset_cfg": SceneEntityCfg("cube1")},
+    # )
+    # reset_cubes_position2 = EventTerm(
+    #     func=mdp.reset_root_state_from_list,
+    #     mode="reset",
+    #     params={"candidates": [0, 1, 0.33], "asset_cfg": SceneEntityCfg("cube2")},
+    # )
+    # reset_cubes_position3 = EventTerm(
+    #     func=mdp.reset_root_state_from_list,
+    #     mode="reset",
+    #     params={"candidates": [-1, 0, 0.33], "asset_cfg": SceneEntityCfg("cube3")},
+    # )
+    # reset_cubes_position4 = EventTerm(
+    #     func=mdp.reset_root_state_from_list,
+    #     mode="reset",
+    #     params={"candidates": [0, -1, 0.33], "asset_cfg": SceneEntityCfg("cube4")},
+    # )
 
 
 @configclass
 class RewardsCfg:
     """Reward terms for the MDP."""
 
+    # # (1) Constant running reward
+    # alive = RewTerm(func=mdp.is_alive, weight=1.0)
+    # (2) Failure penalty
     # terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
     position_tracking = RewTerm(
         func=ithormdp.position_command_error,
         weight=-3.0,
-        params={"std": 0.2, "command_name": "pose_command"},
+        params={"command_name": "pose_command"},
     )
     position_tracking_fine_grained = RewTerm(
         func=ithormdp.position_command_error_tanh,
@@ -183,19 +341,19 @@ class RewardsCfg:
     # )
     collision_penalty = RewTerm(
         func=ithormdp.collision_reward,
-        weight=-5.0,
+        weight=-3.0,
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces"),
             "threshold": 1.0,
         },
     )
-    angular_velocity_penalty = RewTerm(
-        func=ithormdp.angular_velocity_reward,
-        weight=-1.0,
-        params={
-            "threshold": 0.0,
-        },
-    )
+    # angular_velocity_penalty = RewTerm(
+    #     func=ithormdp.angular_velocity_reward,
+    #     weight=-1.0,
+    #     params={
+    #         "threshold": 0.0,
+    #     },
+    # )
 
 
 @configclass
@@ -222,8 +380,12 @@ class CommandsCfg:
         asset_name="robot",
         simple_heading=False,
         resampling_time_range=(15.0, 15.0),
-        debug_vis=True,
-        ranges=navmdp.GoalPositionCommandCfg.Ranges(pos_x=(-2.5, 1.5), pos_y=(-2.5, 1.5), heading=(math.pi, math.pi)),
+        debug_vis=_DEBUG_VIS,
+        ranges=navmdp.GoalPositionCommandCfg.Ranges(pos_x=(-1.5, 1.5), pos_y=(-1.5, 1.5), heading=(math.pi, math.pi)),
+        fixed_positions=_VALID_GOAL_POSITIONS,
+        # ranges=navmdp.UniformPose2dCommandCfg.Ranges(
+        #     pos_x=(-1.0, 1.0), pos_y=(-1.0, 1.0), heading=(math.pi, math.pi)
+        # ),
     )
 
 
@@ -237,7 +399,7 @@ class IthorEnvTerrainCfg(ManagerBasedRLEnvCfg):
     """Configuration for the cartpole environment."""
 
     # Scene settings
-    scene: IthorSceneCfg = IthorSceneCfg(num_envs=16, env_spacing=6.0)
+    scene: IthorSceneCfg = IthorSceneCfg(num_envs=16, env_spacing=7.0)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
