@@ -215,7 +215,17 @@ class IthorSceneCfg(InteractiveSceneCfg):
         ),
         # pattern_cfg=patterns.GridPatternCfg(resolution=0.05, size=[0.7, 0.5]),
         debug_vis=_DEBUG_VIS,
-        mesh_prim_paths=["/World/envs/env_.*/.*"],
+        mesh_prim_paths=[
+            "/World/envs/env_.*/WallEast",
+            "/World/envs/env_.*/WallWest",
+            "/World/envs/env_.*/WallNorth",
+            "/World/envs/env_.*/WallSouth",
+            "/World/envs/env_.*/Roof",
+            "/World/envs/env_.*/Cube1",
+            "/World/envs/env_.*/Cube2",
+            "/World/envs/env_.*/Cube3",
+            "/World/envs/env_.*/Cube4",
+        ],
     )
     contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=3, track_air_time=True)
 
