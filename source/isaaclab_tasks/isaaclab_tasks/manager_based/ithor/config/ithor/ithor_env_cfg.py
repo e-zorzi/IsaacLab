@@ -87,7 +87,7 @@ class IthorSceneCfg(InteractiveSceneCfg):
         update_period=1 / 60,
         # offset=MultiMeshRayCasterCfg.OffsetCfg(pos=(0.35, 0.0, 0.2)),
         pattern_cfg=patterns.LidarPatternCfg(
-            channels=30, vertical_fov_range=[0, 5], horizontal_fov_range=[-45, 45], horizontal_res=1
+            channels=20, vertical_fov_range=[0, 5], horizontal_fov_range=[-30, 30], horizontal_res=1
         ),
         # pattern_cfg=patterns.GridPatternCfg(resolution=0.05, size=[0.7, 0.5]),
         debug_vis=_DEBUG_VIS,
@@ -129,7 +129,8 @@ class ObservationsCfg:
         body_pose = ObsTerm(func=mdp.body_pose_w)
 
         pose_command = ObsTerm(func=mdp.generated_commands, params={"command_name": "pose_command"})
-        joint_pos = ObsTerm(func=mdp.joint_pos_rel)
+        # joint_pos = ObsTerm(func=mdp.joint_pos_rel)
+        distance = ObsTerm(func=ithormdp.position_command_distance, params={"command_name": "pose_command"})
         actions = ObsTerm(func=mdp.last_action)
         height_scan = ObsTerm(
             func=mdp.height_scan_quantized, params={"sensor_cfg": SceneEntityCfg("height_scanner"), "offset": 0.145}
@@ -183,7 +184,7 @@ class RewardsCfg:
     position_tracking = RewTerm(
         func=ithormdp.position_command_error,
         weight=-3.0,
-        params={"std": 0.2, "command_name": "pose_command"},
+        params={"command_name": "pose_command"},
     )
     position_tracking_fine_grained = RewTerm(
         func=ithormdp.position_command_error_tanh,

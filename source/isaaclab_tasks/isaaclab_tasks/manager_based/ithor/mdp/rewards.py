@@ -23,7 +23,7 @@ def position_command_error_tanh(env: ManagerBasedRLEnv, std: float, command_name
     return 1 - torch.tanh(distance / std)
 
 
-def position_command_error(env: ManagerBasedRLEnv, std: float, command_name: str) -> torch.Tensor:
+def position_command_error(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
     """Reward position tracking with tanh kernel."""
     command = env.command_manager.get_command(command_name)
     des_pos_b = command[:, :2]
@@ -33,6 +33,13 @@ def position_command_error(env: ManagerBasedRLEnv, std: float, command_name: str
     # print(list(des_pos_b), rew)
     # print("===========================\n")
     return rew
+
+
+def position_command_distance(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
+    command = env.command_manager.get_command(command_name)
+    des_pos_b = command[:, :2]
+    distance = torch.norm(des_pos_b, dim=1)
+    return distance.unsqueeze(dim=1)
 
 
 def heading_command_error_abs(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
@@ -51,7 +58,7 @@ def collision_reward(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg, thresho
     # print("~~~~~~~~~~~~~~", sensor.data)
 
     collided = (torch.linalg.norm(forces[..., :2], dim=-1) > threshold).any(dim=1)
-    # print("~~~~~~~~~~~~~~", collided)
+    # print("~~~~~~~~~~~~~~", collided.float())
 
     return collided.float()
 
