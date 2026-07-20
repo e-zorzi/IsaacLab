@@ -4,6 +4,8 @@
 **/*.so
 **/*.log*
 
+assets
+
 # Omniverse
 **/*.dmp
 **/.thumbs
