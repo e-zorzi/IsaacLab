@@ -87,7 +87,7 @@ class IthorSceneCfg(InteractiveSceneCfg):
         update_period=1 / 60,
         # offset=MultiMeshRayCasterCfg.OffsetCfg(pos=(0.35, 0.0, 0.2)),
         pattern_cfg=patterns.LidarPatternCfg(
-            channels=20, vertical_fov_range=[0, 5], horizontal_fov_range=[-30, 30], horizontal_res=1
+            channels=1, vertical_fov_range=[0, 1], horizontal_fov_range=[-45, 45], horizontal_res=1.5
         ),
         # pattern_cfg=patterns.GridPatternCfg(resolution=0.05, size=[0.7, 0.5]),
         debug_vis=_DEBUG_VIS,
@@ -198,7 +198,7 @@ class RewardsCfg:
     # )
     collision_penalty = RewTerm(
         func=ithormdp.collision_reward,
-        weight=-3.0,
+        weight=-6.0,
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces"),
             "threshold": 1.0,

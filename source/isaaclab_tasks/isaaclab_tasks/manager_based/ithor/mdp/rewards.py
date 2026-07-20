@@ -63,13 +63,14 @@ def collision_reward(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg, thresho
     return collided.float()
 
 
-def angular_velocity_reward(env: ManagerBasedRLEnv, threshold: float):
-    """Penalize angular velocity."""
-    action = env.action_manager.action[:, 1].abs()
-    # print("~~~~~~~~~~~~~~", action)
-    # action = torch.where(action.abs() > 0.0, 1.0, 0.0)
-    # print("~~~~~~~~~~~~~~", action)
-    return action
+# WRONG
+# def angular_velocity_reward(env: ManagerBasedRLEnv, threshold: float):
+#     """Penalize angular velocity."""
+#     action = env.action_manager.action[:, 1].abs()
+#     print("~~~~~~~~~~~~~~", action)
+#     action = torch.where(action.abs() > 0.0, 1.0, 0.0)
+#     # print("~~~~~~~~~~~~~~", action)
+#     return action
 
 
 def angular_velocity_binary_reward(env: ManagerBasedRLEnv, threshold: float):

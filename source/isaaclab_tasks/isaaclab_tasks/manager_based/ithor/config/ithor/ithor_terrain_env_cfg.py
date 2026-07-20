@@ -195,6 +195,8 @@ class IthorSceneCfg(InteractiveSceneCfg):
     robot: ArticulationCfg = LIMO_CONFIG.replace(
         prim_path="{ENV_REGEX_NS}/Robot",
         init_state=ArticulationCfg.InitialStateCfg(
+            pos=robot_position,
+            rot=robot_rotation,
             joint_pos={
                 "front_left_wheel": 0.0,
                 "front_right_wheel": 0.0,
@@ -211,7 +213,7 @@ class IthorSceneCfg(InteractiveSceneCfg):
         update_period=1 / 60,
         # offset=MultiMeshRayCasterCfg.OffsetCfg(pos=(0.35, 0.0, 0.2)),
         pattern_cfg=patterns.LidarPatternCfg(
-            channels=20, vertical_fov_range=[0, 1], horizontal_fov_range=[-45, 45], horizontal_res=1
+            channels=1, vertical_fov_range=[0, 1], horizontal_fov_range=[-45, 45], horizontal_res=1.5
         ),
         # pattern_cfg=patterns.GridPatternCfg(resolution=0.05, size=[0.7, 0.5]),
         debug_vis=_DEBUG_VIS,

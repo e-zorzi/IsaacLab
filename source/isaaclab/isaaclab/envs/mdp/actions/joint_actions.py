@@ -290,8 +290,8 @@ class FourWheeledJointVelocityAction(JointAction):
 
         # v = actions[:, 0]
         # omega = actions[:, 1]
-        v = torch.clamp(actions[:, 0], min=0.0)
 
+        v = torch.clamp(actions[:, 0], min=0.0)
         omega = actions[:, 1]
 
         moving = v > 0.05
