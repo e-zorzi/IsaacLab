@@ -25,7 +25,8 @@ from isaaclab_tasks.manager_based.ithor import _ITHOR_VALID_GOAL_POSITIONS, _ITH
 
 from isaaclab_assets import LIMO_CONFIG
 
-_DEBUG_VIS = False
+_DEBUG_RAYCASTER = False
+_DEBUG_GOAL = False
 ##
 # Scene definition
 ##
@@ -90,7 +91,7 @@ class IthorSceneCfg(InteractiveSceneCfg):
             channels=1, vertical_fov_range=[0, 1], horizontal_fov_range=[-45, 45], horizontal_res=1.5
         ),
         # pattern_cfg=patterns.GridPatternCfg(resolution=0.05, size=[0.7, 0.5]),
-        debug_vis=_DEBUG_VIS,
+        debug_vis=_DEBUG_RAYCASTER,
         mesh_prim_paths=["/World/envs/env_.*/Scene"],
     )
     contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=3, track_air_time=True)
@@ -237,7 +238,7 @@ class CommandsCfg:
         asset_name="robot",
         simple_heading=False,
         resampling_time_range=(15.0, 15.0),
-        debug_vis=_DEBUG_VIS,
+        debug_vis=_DEBUG_GOAL,
         ranges=navmdp.GoalPositionCommandCfg.Ranges(pos_x=(-1.5, 1.5), pos_y=(-1.5, 1.5), heading=(math.pi, math.pi)),
         fixed_positions=_VALID_GOAL_POSITIONS,
         # ranges=navmdp.UniformPose2dCommandCfg.Ranges(
