@@ -300,19 +300,16 @@ def height_scan(env: ManagerBasedEnv, sensor_cfg: SceneEntityCfg, offset: float 
     return sensor.data.pos_w[:, 2].unsqueeze(1) - sensor.data.ray_hits_w[..., 2] - offset
 
 
-def height_scan_quantized(
-    env: ManagerBasedEnv, sensor_cfg: SceneEntityCfg, offset: float = 0.5, digits=4
-) -> torch.Tensor:
+def raycast_hits_distance(env: ManagerBasedEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """Height scan from the given sensor w.r.t. the sensor's frame.
 
     The provided offset (Defaults to 0.5) is subtracted from the returned values.
     """
-    scale = 10.0**digits
     # extract the used quantities (to enable type-hinting)
     sensor: RayCaster = env.scene.sensors[sensor_cfg.name]
     # height scan: height = sensor_height - hit_point_z - offset
-    val = sensor.data.pos_w[:, 2].unsqueeze(1) - sensor.data.ray_hits_w[..., 2] - offset
-    return torch.round(val * scale) / scale  # keep only 'digits' significant digits
+    val = sensor.data.pos_w.unsqueeze(1) - sensor.data.ray_hits_w
+    return torch.linalg.vector_norm(val, dim=2)  # keep only 'digits' significant digits
 
 
 def body_incoming_wrench(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:

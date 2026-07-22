@@ -21,7 +21,7 @@ from isaaclab.utils import configclass
 import isaaclab_tasks.manager_based.classic.cartpole.mdp as mdp
 import isaaclab_tasks.manager_based.ithor.mdp as ithormdp
 import isaaclab_tasks.manager_based.navigation.mdp as navmdp
-from isaaclab_tasks.manager_based.ithor import _ITHOR_VALID_GOAL_POSITIONS, _ITHOR_VALID_ROBOT_POSES
+from isaaclab_tasks.manager_based.ithor import get_valid_goal_pose, get_valid_starting_pose
 
 from isaaclab_assets import LIMO_CONFIG
 
@@ -33,15 +33,13 @@ _DEBUG_GOAL = False
 SCENE_NUM = 212
 
 try:
-    _VALID_GOAL_POSITIONS = _ITHOR_VALID_GOAL_POSITIONS[str(SCENE_NUM)]
+    VALID_GOAL_POSITIONS = get_valid_goal_pose(SCENE_NUM)
 except:  # noqa
-    _VALID_GOAL_POSITIONS = None
+    VALID_GOAL_POSITIONS = None
 
 
 try:
-    robot_data = _ITHOR_VALID_ROBOT_POSES[str(SCENE_NUM)]
-    robot_position = robot_data[0]
-    robot_rotation = robot_data[1]
+    robot_position, robot_rotation = get_valid_starting_pose(SCENE_NUM)
 except:  # noqa
     print("Defaulting robot position and orientation...")
     robot_position = [0, 0, 0]  # default
@@ -133,9 +131,7 @@ class ObservationsCfg:
         # joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         distance = ObsTerm(func=ithormdp.position_command_distance, params={"command_name": "pose_command"})
         actions = ObsTerm(func=mdp.last_action)
-        height_scan = ObsTerm(
-            func=mdp.height_scan_quantized, params={"sensor_cfg": SceneEntityCfg("height_scanner"), "offset": 0.145}
-        )
+        height_scan = ObsTerm(func=mdp.raycast_hits_distance, params={"sensor_cfg": SceneEntityCfg("height_scanner")})
 
         def __post_init__(self) -> None:
             self.enable_corruption = False
@@ -240,7 +236,7 @@ class CommandsCfg:
         resampling_time_range=(15.0, 15.0),
         debug_vis=_DEBUG_GOAL,
         ranges=navmdp.GoalPositionCommandCfg.Ranges(pos_x=(-1.5, 1.5), pos_y=(-1.5, 1.5), heading=(math.pi, math.pi)),
-        fixed_positions=_VALID_GOAL_POSITIONS,
+        fixed_positions=VALID_GOAL_POSITIONS,
         # ranges=navmdp.UniformPose2dCommandCfg.Ranges(
         #     pos_x=(-1.0, 1.0), pos_y=(-1.0, 1.0), heading=(math.pi, math.pi)
         # ),
