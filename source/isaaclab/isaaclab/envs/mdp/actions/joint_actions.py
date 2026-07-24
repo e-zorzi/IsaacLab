@@ -265,7 +265,7 @@ class JointEffortAction(JointAction):
 
 
 class FourWheeledJointVelocityAction(JointAction):
-    """Maps 2D actions [front, rear] → 4 wheel joint velocity targets."""
+    """Maps 2D actions [v, omega] → 4 wheel joint velocity targets."""
 
     cfg: actions_cfg.FourWheeledJointVelocityActionCfg
 

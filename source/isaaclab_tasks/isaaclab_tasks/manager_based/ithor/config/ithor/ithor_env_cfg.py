@@ -114,6 +114,17 @@ class ActionsCfg:
         ],
         scale=3.0,
     )
+    # joint_effort = mdp.JointVelocityActionCfg(
+    #     asset_name="robot",
+    #     joint_names=[
+    #         "front_left_wheel",
+    #         "front_right_wheel",
+    #         "rear_left_wheel",
+    #         "rear_right_wheel",
+    #     ],
+    #     scale=300.0,
+    #     use_default_offset=True,
+    # )
 
 
 @configclass
@@ -183,19 +194,19 @@ class RewardsCfg:
         weight=-3.0,
         params={"command_name": "pose_command"},
     )
-    position_tracking_fine_grained = RewTerm(
-        func=ithormdp.position_command_error_tanh,
-        weight=1.0,
-        params={"std": 0.2, "command_name": "pose_command"},
-    )
-    # orientation_tracking = RewTerm(
-    #     func=ithormdp.heading_command_error_abs,
-    #     weight=-1.0,
-    #     params={"command_name": "pose_command"},
+    # position_tracking_fine_grained = RewTerm(
+    #     func=ithormdp.position_command_error_tanh,
+    #     weight=1.0,
+    #     params={"std": 0.2, "command_name": "pose_command"},
     # )
+    orientation_tracking = RewTerm(
+        func=ithormdp.heading_command_error_abs,
+        weight=-1.0,
+        params={"command_name": "pose_command"},
+    )
     collision_penalty = RewTerm(
         func=ithormdp.collision_reward,
-        weight=-6.0,
+        weight=-3.0,
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces"),
             "threshold": 1.0,
@@ -273,4 +284,4 @@ class IthorEnvCfg(ManagerBasedRLEnvCfg):
         self.viewer.eye = (8.0, 0.0, 5.0)
         # simulation settings
         self.sim.dt = 1 / 30
-        self.sim.render_interval = self.decimation / 10
+        self.sim.render_interval = self.decimation  # / 10

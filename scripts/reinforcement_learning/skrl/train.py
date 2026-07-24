@@ -118,7 +118,7 @@ from isaaclab_tasks.utils.hydra import hydra_task_config
 # import logger
 logger = logging.getLogger(__name__)
 
-import mape.tasks  # noqa: F401
+# import mape.tasks  # noqa: F401
 
 # ---------------------------------------------------------------------------
 # Fix: skrl uses its own SummaryWriter (skrl.utils.tensorboard.SummaryWriter)
@@ -141,37 +141,39 @@ _orig_wandb_init = _wandb_module.init
 
 
 def _patched_wandb_init(*args, **kwargs):
-    kwargs["sync_tensorboard"] = False
+    kwargs["sync_tensorboard"] = True
     return _orig_wandb_init(*args, **kwargs)
 
 
 _wandb_module.init = _patched_wandb_init
 
-from skrl.multi_agents.torch.base import MultiAgent as _SkrlMultiAgent
+# from skrl.multi_agents.torch.base import MultiAgent as _SkrlMultiAgent
 
-_orig_write_tracking_data = _SkrlMultiAgent.write_tracking_data
-
-
-def _patched_write_tracking_data(self, *, timestep: int, timesteps: int) -> None:
-    # Collect aggregated metrics BEFORE the original method clears tracking_data.
-    wandb_data: dict = {}
-    for k, v in self.tracking_data.items():
-        if k.endswith("(min)"):
-            wandb_data[k] = float(np.min(v))
-        elif k.endswith("(max)"):
-            wandb_data[k] = float(np.max(v))
-        else:
-            wandb_data[k] = float(np.mean(v))
-
-    # Original behaviour: write to TensorBoard and clear tracking_data.
-    _orig_write_tracking_data(self, timestep=timestep, timesteps=timesteps)
-
-    # Additionally push metrics to wandb if a run is active.
-    if _wandb_module.run is not None and wandb_data:
-        _wandb_module.log(wandb_data, step=timestep)
+# _orig_write_tracking_data = _SkrlMultiAgent.write_tracking_data
 
 
-_SkrlMultiAgent.write_tracking_data = _patched_write_tracking_data
+# def _patched_write_tracking_data(self, *, timestep: int, timesteps: int) -> None:
+#     # Collect aggregated metrics BEFORE the original method clears tracking_data.
+#     wandb_data: dict = {}
+#     print("CALLED PATCHED")
+#     print(self.tracking_data.items)
+#     for k, v in self.tracking_data.items():
+#         if k.endswith("(min)"):
+#             wandb_data[k] = float(np.min(v))
+#         elif k.endswith("(max)"):
+#             wandb_data[k] = float(np.max(v))
+#         else:
+#             wandb_data[k] = float(np.mean(v))
+
+#     # Original behaviour: write to TensorBoard and clear tracking_data.
+#     _orig_write_tracking_data(self, timestep=timestep, timesteps=timesteps)
+
+#     # Additionally push metrics to wandb if a run is active.
+#     if _wandb_module.run is not None and wandb_data:
+#         _wandb_module.log(wandb_data, step=timestep)
+
+
+# _SkrlMultiAgent.write_tracking_data = _patched_write_tracking_data
 # ---------------------------------------------------------------------------
 
 # config shortcuts
