@@ -44,17 +44,15 @@ parser.add_argument(
     "--ml_framework",
     type=str,
     default="torch",
-    choices=["torch", "jax"],
+    choices=["torch", "jax", "jax-numpy"],
     help="The ML framework used for training the skrl agent.",
 )
 parser.add_argument(
     "--algorithm",
     type=str,
     default="PPO",
-    help=(
-        "Name of the RL algorithm to use (e.g. AMP, DDPG, IPPO, MAPPO, PPO, SAC, TD3, etc.) "
-        "when several algorithms exist for the same task. For a more specific selection, use the argument --agent."
-    ),
+    choices=["AMP", "PPO", "IPPO", "MAPPO"],
+    help="The RL algorithm used for training the skrl agent.",
 )
 parser.add_argument(
     "--ray-proc-id", "-rid", type=int, default=None, help="Automatically configured by Ray integration, otherwise None."
@@ -82,12 +80,13 @@ import random
 import time
 from datetime import datetime
 
+import numpy as np
 import gymnasium as gym
 import skrl
 from packaging import version
 
 # check for minimum supported skrl version
-SKRL_VERSION = "2.0.0"
+SKRL_VERSION = "1.4.3"
 if version.parse(skrl.__version__) < version.parse(SKRL_VERSION):
     skrl.logger.error(
         f"Unsupported skrl version: {skrl.__version__}. "
@@ -115,12 +114,65 @@ from isaaclab_rl.skrl import SkrlVecEnvWrapper
 
 import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.utils.hydra import hydra_task_config
-import wandb
 
 # import logger
 logger = logging.getLogger(__name__)
 
-# PLACEHOLDER: Extension template (do not remove this comment)
+import mape.tasks  # noqa: F401
+
+# ---------------------------------------------------------------------------
+# Fix: skrl uses its own SummaryWriter (skrl.utils.tensorboard.SummaryWriter)
+# which writes TensorBoard events directly via low-level APIs, bypassing the
+# PyTorch / TF writers that wandb's sync_tensorboard=True monkey-patches.
+# As a result, wandb never receives any training metrics even though the
+# TensorBoard event files are written correctly.
+#
+# Solution: patch MultiAgent.write_tracking_data so that every time skrl
+# would flush metrics to TensorBoard it also calls wandb.log() directly.
+#
+# X-axis fix: skrl sets sync_tensorboard=True by default, which causes wandb
+# to ignore the explicit step= argument and use its own internal commit
+# counter (0, 1, 2 ...) as the x-axis. We patch init() so sync_tensorboard
+# is forced to False, which lets our explicit step values appear correctly.
+# ---------------------------------------------------------------------------
+import wandb as _wandb_module
+
+_orig_wandb_init = _wandb_module.init
+
+
+def _patched_wandb_init(*args, **kwargs):
+    kwargs["sync_tensorboard"] = False
+    return _orig_wandb_init(*args, **kwargs)
+
+
+_wandb_module.init = _patched_wandb_init
+
+from skrl.multi_agents.torch.base import MultiAgent as _SkrlMultiAgent
+
+_orig_write_tracking_data = _SkrlMultiAgent.write_tracking_data
+
+
+def _patched_write_tracking_data(self, *, timestep: int, timesteps: int) -> None:
+    # Collect aggregated metrics BEFORE the original method clears tracking_data.
+    wandb_data: dict = {}
+    for k, v in self.tracking_data.items():
+        if k.endswith("(min)"):
+            wandb_data[k] = float(np.min(v))
+        elif k.endswith("(max)"):
+            wandb_data[k] = float(np.max(v))
+        else:
+            wandb_data[k] = float(np.mean(v))
+
+    # Original behaviour: write to TensorBoard and clear tracking_data.
+    _orig_write_tracking_data(self, timestep=timestep, timesteps=timesteps)
+
+    # Additionally push metrics to wandb if a run is active.
+    if _wandb_module.run is not None and wandb_data:
+        _wandb_module.log(wandb_data, step=timestep)
+
+
+_SkrlMultiAgent.write_tracking_data = _patched_write_tracking_data
+# ---------------------------------------------------------------------------
 
 # config shortcuts
 if args_cli.agent is None:
@@ -133,10 +185,6 @@ else:
 
 @hydra_task_config(args_cli.task, agent_cfg_entry_point)
 def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agent_cfg: dict):
-    wandb.init(
-        project="IsaacLab",
-        sync_tensorboard=True,
-    )
     """Train with skrl agent."""
     # override configurations with non-hydra CLI arguments
     env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else env_cfg.scene.num_envs
