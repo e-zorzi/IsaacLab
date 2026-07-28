@@ -246,6 +246,7 @@ class JointVelocityAction(JointAction):
             self._offset = self._asset.data.default_joint_vel[:, self._joint_ids].clone()
 
     def apply_actions(self):
+        print(self.processed_actions)
         # set joint velocity targets
         self._asset.set_joint_velocity_target(self.processed_actions, joint_ids=self._joint_ids)
 
@@ -288,20 +289,20 @@ class FourWheeledJointVelocityAction(JointAction):
     def apply_actions(self):
         actions = self.processed_actions  # (N, 2)
 
-        # v = actions[:, 0]
-        # omega = actions[:, 1]
-
-        v = torch.clamp(actions[:, 0], min=0.0)
+        v = actions[:, 0]
         omega = actions[:, 1]
 
-        moving = v > 0.05
-        omega_limit = 2.0 * v / self.track_width
+        # v = torch.clamp(actions[:, 0], min=0.0)
+        # omega = actions[:, 1]
 
-        omega = torch.where(
-            moving,
-            torch.clamp(omega, -omega_limit, omega_limit),
-            omega,
-        )
+        # moving = v > 0.05
+        # omega_limit = 2.0 * v / self.track_width
+
+        # omega = torch.where(
+        #     moving,
+        #     torch.clamp(omega, -omega_limit, omega_limit),
+        #     omega,
+        # )
 
         v_left = v - 0.5 * self.track_width * omega
         v_right = v + 0.5 * self.track_width * omega
