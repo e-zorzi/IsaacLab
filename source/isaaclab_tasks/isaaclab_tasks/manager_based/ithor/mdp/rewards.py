@@ -35,6 +35,14 @@ def position_command_error(env: ManagerBasedRLEnv, command_name: str) -> torch.T
     return rew
 
 
+def negative_linear_velocity_reward(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """Reward position tracking with tanh kernel."""
+    # I.e. (-2.04, 1.358) becomes (2.04, 0) (but we only pick the first index which is the
+    # linear velocity)
+    action = torch.clip(env.action_manager.action[:, 0] * -1.0, 0.0)
+    return action
+
+
 def position_command_distance(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
     command = env.command_manager.get_command(command_name)
     des_pos_b = command[:, :2]
