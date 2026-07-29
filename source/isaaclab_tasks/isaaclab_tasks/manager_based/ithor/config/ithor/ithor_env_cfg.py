@@ -112,7 +112,7 @@ class ActionsCfg:
             "rear_left_wheel",
             "rear_right_wheel",
         ],
-        scale=3.0,
+        scale=1.0,
     )
     # joint_effort = mdp.JointVelocityActionCfg(
     #     asset_name="robot",
