@@ -212,7 +212,7 @@ class RewardsCfg:
             "threshold": 1.0,
         },
     )
-    negative_linear_velocity_penalty = RewTerm(func=ithormdp.negative_linear_velocity_reward, weight=-1.0)
+    negative_linear_velocity_penalty = RewTerm(func=ithormdp.negative_linear_velocity_reward, weight=-0.1)
 
 
 @configclass
