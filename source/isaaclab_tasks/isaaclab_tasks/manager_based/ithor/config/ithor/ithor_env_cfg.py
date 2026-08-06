@@ -5,6 +5,8 @@
 
 import math
 
+import numpy as np
+
 import isaaclab.sim as sim_utils
 from isaaclab.assets import ArticulationCfg, AssetBaseCfg
 from isaaclab.envs import ManagerBasedRLEnvCfg
@@ -21,7 +23,11 @@ from isaaclab.utils import configclass
 import isaaclab_tasks.manager_based.classic.cartpole.mdp as mdp
 import isaaclab_tasks.manager_based.ithor.mdp as ithormdp
 import isaaclab_tasks.manager_based.navigation.mdp as navmdp
-from isaaclab_tasks.manager_based.ithor import get_valid_goal_pose, get_valid_starting_pose
+from isaaclab_tasks.manager_based.ithor import (
+    get_all_valid_starting_poses,
+    get_random_valid_starting_pose,
+    get_valid_goal_pose,
+)
 
 from isaaclab_assets import LIMO_CONFIG
 
@@ -30,7 +36,9 @@ _DEBUG_GOAL = False
 ##
 # Scene definition
 ##
-SCENE_NUM = 212
+SCENE_NUM = 212  # 210, 221
+
+_POSES_RNG = np.random.default_rng(42)  # random number generator for poses
 
 try:
     VALID_GOAL_POSITIONS = get_valid_goal_pose(SCENE_NUM)
@@ -39,7 +47,7 @@ except:  # noqa
 
 
 try:
-    robot_position, robot_rotation = get_valid_starting_pose(SCENE_NUM)
+    robot_position, robot_rotation = get_random_valid_starting_pose(SCENE_NUM, _POSES_RNG)
 except:  # noqa
     print("Defaulting robot position and orientation...")
     robot_position = [0, 0, 0]  # default
@@ -175,9 +183,9 @@ class EventCfg:
         },
     )
     reset_robot_position = EventTerm(
-        func=mdp.reset_root_state_from_list,
+        func=mdp.reset_root_state_from_fixed_list,
         mode="reset",
-        params={"candidates": robot_position},
+        params={"fixed_list": get_all_valid_starting_poses(SCENE_NUM)},
     )
 
 
@@ -238,9 +246,9 @@ class CommandsCfg:
     pose_command = navmdp.GoalPositionCommandCfg(
         asset_name="robot",
         simple_heading=False,
-        resampling_time_range=(15.0, 15.0),
+        resampling_time_range=(20.0, 20.0),
         debug_vis=_DEBUG_GOAL,
-        ranges=navmdp.GoalPositionCommandCfg.Ranges(pos_x=(-1.5, 1.5), pos_y=(-1.5, 1.5), heading=(math.pi, math.pi)),
+        ranges=navmdp.GoalPositionCommandCfg.Ranges(pos_x=(-1.0, 1.0), pos_y=(-1.0, 1.0), heading=(math.pi, math.pi)),
         fixed_positions=VALID_GOAL_POSITIONS,
         # ranges=navmdp.UniformPose2dCommandCfg.Ranges(
         #     pos_x=(-1.0, 1.0), pos_y=(-1.0, 1.0), heading=(math.pi, math.pi)
