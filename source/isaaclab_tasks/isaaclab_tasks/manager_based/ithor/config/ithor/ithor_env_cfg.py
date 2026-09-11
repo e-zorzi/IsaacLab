@@ -32,7 +32,7 @@ from isaaclab_tasks.manager_based.ithor import (
 from isaaclab_assets import LIMO_CONFIG
 
 _DEBUG_RAYCASTER = False
-_DEBUG_GOAL = False
+_DEBUG_GOAL = True
 ##
 # Scene definition
 ##
@@ -286,4 +286,4 @@ class IthorEnvCfg(ManagerBasedRLEnvCfg):
         self.viewer.eye = (8.0, 0.0, 5.0)
         # simulation settings
         self.sim.dt = 1 / 30
-        self.sim.render_interval = self.decimation  # / 10
+        self.sim.render_interval = self.decimation / 10
